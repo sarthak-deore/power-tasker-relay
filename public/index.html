@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Register Public Key</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: linear-gradient(to bottom, #74b9ff, #a29bfe);
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+      }
+
+      .container {
+        background-color: #fff;
+        padding: 60px;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        width: 90%;
+        max-width: 600px;
+        text-align: center;
+      }
+
+      h1 {
+        margin: 0 0 20px;
+        color: #2d3436;
+        font-size: 1.8em;
+      }
+
+      label {
+        font-weight: bold;
+        color: #636e72;
+        display: block;
+        margin: 15px 0 5px;
+      }
+
+      input[type="text"] {
+        width: 100%;
+        padding: 10px;
+        margin: 5px 0 20px;
+        border: 1px solid #dcdde1;
+        border-radius: 5px;
+        font-size: 1em;
+      }
+
+      .g-recaptcha {
+        margin-bottom: 20px;
+      }
+
+      button {
+        background-color: #0984e3;
+        color: #fff;
+        border: none;
+        padding: 10px 20px;
+        margin-top: 20px;
+        font-size: 1em;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+        text-align: left;
+        display: block;
+        margin-left: 0;
+      }
+
+      button:hover {
+        background-color: #74b9ff;
+      }
+
+      .message {
+        margin-top: 20px;
+        font-size: 1em;
+        color: #2d3436;
+      }
+
+      .error {
+        color: #d63031;
+      }
+
+      .success {
+        color: #00b894;
+      }
+
+      .loading {
+        display: none;
+        margin: 20px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Register Your Public Key</h1>
+      <div id="loading" class="loading">Loading reCAPTCHA...</div>
+      <form id="register-form" style="display: none">
+        <input
+          type="text"
+          id="pubkey"
+          name="pubkey"
+          placeholder="Enter your public key"
+          required
+        />
+        <div id="recaptcha-container"></div>
+        <button type="submit">Register</button>
+      </form>
+      <div id="message" class="message"></div>
+    </div>
+
+    <script>
+      async function initializeRecaptcha() {
+        try {
+          const response = await fetch("/api/pubkeys/recaptcha-site-key");
+          if (!response.ok) {
+            throw new Error("Failed to fetch reCAPTCHA site key");
+          }
+
+          const { siteKey } = await response.json();
+
+          // Load reCAPTCHA script dynamically
+          const script = document.createElement("script");
+          script.src = `https://www.google.com/recaptcha/api.js?render=explicit`;
+          script.async = true;
+          script.defer = true;
+
+          script.onload = () => {
+            // Initialize reCAPTCHA once the script is loaded
+            grecaptcha.ready(() => {
+              grecaptcha.render("recaptcha-container", {
+                sitekey: siteKey,
+              });
+              // Show the form and hide loading message
+              document.getElementById("loading").style.display = "none";
+              document.getElementById("register-form").style.display = "block";
+            });
+          };
+
+          document.head.appendChild(script);
+        } catch (error) {
+          console.error("Error initializing reCAPTCHA:", error);
+          showMessage(
+            "Failed to load reCAPTCHA. Please refresh the page.",
+            "error"
+          );
+        }
+      }
+
+      document
+        .getElementById("register-form")
+        .addEventListener("submit", async (event) => {
+          event.preventDefault();
+          const pubkey = document.getElementById("pubkey").value;
+          const captchaToken = grecaptcha.getResponse();
+
+          if (!captchaToken) {
+            showMessage("Please complete the CAPTCHA", "error");
+            return;
+          }
+
+          try {
+            const response = await fetch("/api/pubkeys/register", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ pubkey, captchaToken }),
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+              showMessage("Registration successful!", "success");
+            } else if (response.status === 409) {
+              showMessage("This public key is already registered.", "error");
+            } else {
+              showMessage(`Error: ${data.error}`, "error");
+            }
+          } catch (err) {
+            console.error(err);
+            showMessage("An error occurred. Please try again later.", "error");
+          }
+        });
+
+      function showMessage(message, type) {
+        const messageElement = document.getElementById("message");
+        messageElement.textContent = message;
+        messageElement.className = `message ${type}`;
+      }
+
+      // Initialize when the page loads
+      initializeRecaptcha();
+    </script>
+  </body>
+</html>
