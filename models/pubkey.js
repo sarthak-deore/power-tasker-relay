@@ -2,8 +2,8 @@ const mongoose = require("mongoose");
 
 const PubKeySchema = new mongoose.Schema({
   pubkey: { type: String, required: true, unique: true },
-  mostRecentCommand: { type: String, default: null },
-  signature: { type: String, default: null },
+  mostRecentCommand: { type: String, default: "" },
+  signature: { type: String, default: "" },
   lastTimestamp: { type: Date, default: Date.now },
 });
 

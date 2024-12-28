@@ -1,8 +1,8 @@
 const express = require("express");
 const router = express.Router();
-const { sendRequest, fetchResponse } = require("../controllers/mainController");
+const { sendCommand, fetchCommand } = require("../controllers/mainController");
 
-router.post("/send-request", sendRequest);
-router.get("/fetch-response/:pubkey", fetchResponse);
+router.post("/send-command", sendCommand);
+router.post("/fetch-command", fetchCommand);
 
 module.exports = router;

@@ -2,9 +2,8 @@ const PubKey = require("../models/pubkey");
 
 const signVerify = require("./signVerify");
 
-//submit commands
-
-const sendRequest = async (req, res) => {
+//submit command
+const sendCommand = async (req, res) => {
   const { pubkey, signature, command } = req.body;
 
   if (!pubkey || !signature || !command) {
@@ -42,13 +41,19 @@ const sendRequest = async (req, res) => {
   res.status(200).json({ success: true });
 };
 
-//fetch commands
+//fetch command
+const fetchCommand = async (req, res) => {
+  const { pubkey, signature, command } = req.body;
 
-const fetchResponse = async (req, res) => {
-  const { pubkey } = req.params;
+  if (!pubkey || !signature || !command) {
+    return res
+      .status(400)
+      .json({ error: "Public key, signature, and command are required" });
+  }
 
-  if (!pubkey) {
-    return res.status(400).json({ error: "Public key is required" });
+  //check if the request command "get" is valid
+  if (!["get"].includes(command)) {
+    return res.status(400).json({ error: "Invalid command" });
   }
 
   const pubkeyEntry = await PubKey.findOne({
@@ -58,12 +63,28 @@ const fetchResponse = async (req, res) => {
     return res.status(404).json({ error: "Public key not found" });
   }
 
+  const result = signVerify.verifySignature(signature, pubkey, command);
+
+  if (!result) {
+    return res.status(403).json({ error: "Invalid signature" });
+  }
+
+  // Check if command and signature are empty
+  if (!pubkeyEntry.mostRecentCommand || !pubkeyEntry.signature) {
+    return res.status(204).send("No command available");
+  }
+
   //send command, pubkey, and signature to the client
   res.status(200).json({
     command: pubkeyEntry.mostRecentCommand,
     pubkey: pubkeyEntry.pubkey,
     signature: pubkeyEntry.signature,
   });
+
+  //reset the command and signature for the pubkey
+  pubkeyEntry.mostRecentCommand = "";
+  pubkeyEntry.signature = "";
+  await pubkeyEntry.save();
 };
 
-module.exports = { sendRequest, fetchResponse };
+module.exports = { sendCommand, fetchCommand };
