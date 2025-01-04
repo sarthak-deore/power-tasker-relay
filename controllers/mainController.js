@@ -36,8 +36,25 @@ const parseCommand = (commandStr) => {
   };
 };
 
+//get last fetched
+const getLastFetched = async (req, res) => {
+  const { pubkey } = req.body;
 
+  if (!pubkey) {
+    return res.status(400).json({ error: "Public key is required" });
+  }
 
+  const pubkeyEntry = await PubKey.findOne({
+    pubkey,
+  });
+  if (!pubkeyEntry) {
+    return res.status(404).json({ error: "Public key not found" });
+  }
+
+  res.status(200).json({ lastfetched: pubkeyEntry.lastfetched });
+};
+
+//send command
 const sendCommand = async (req, res) => {
   const { pubkey, signature, command } = req.body;
 
@@ -87,7 +104,7 @@ const sendCommand = async (req, res) => {
   res.status(200).json({ success: true });
 };
 
-
+//fetch command
 const fetchCommand = async (req, res) => {
   const { pubkey, signature, command } = req.body;
 
@@ -126,8 +143,10 @@ const fetchCommand = async (req, res) => {
     return res.status(403).json({ error: "Invalid signature" });
   }
 
-  // check command and signature are empty
+  // check if stored command and signature are empty
   if (!pubkeyEntry.mostRecentCommand || !pubkeyEntry.signature) {
+    pubkeyEntry.lastfetched = parsedCommand.timestamp;
+    await pubkeyEntry.save();
     return res.status(204).send("No command available");
   }
 
@@ -137,6 +156,7 @@ const fetchCommand = async (req, res) => {
     // reset if expired command
     pubkeyEntry.mostRecentCommand = "";
     pubkeyEntry.signature = "";
+    pubkeyEntry.lastfetched = parsedCommand.timestamp;
     await pubkeyEntry.save();
     return res.status(204).send("No valid command available");
   }
@@ -151,7 +171,8 @@ const fetchCommand = async (req, res) => {
   // reset the command and signature for the pubkey
   pubkeyEntry.mostRecentCommand = "";
   pubkeyEntry.signature = "";
+  pubkeyEntry.lastfetched = parsedCommand.timestamp;
   await pubkeyEntry.save();
 };
 
-module.exports = { sendCommand, fetchCommand };
+module.exports = { sendCommand, fetchCommand, getLastFetched };

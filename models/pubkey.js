@@ -5,6 +5,7 @@ const PubKeySchema = new mongoose.Schema({
   mostRecentCommand: { type: String, default: "" },
   signature: { type: String, default: "" },
   lastTimestamp: { type: Date, default: Date.now },
+  lastfetched: { type: String, default: "" },
 });
 
 // Update lastTimestamp whenever the document is updated
