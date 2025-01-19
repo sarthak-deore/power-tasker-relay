@@ -36,7 +36,7 @@ const parseCommand = (commandStr) => {
   };
 };
 
-//get last fetched
+// get last fetched
 const getLastFetched = async (req, res) => {
   const { pubkey } = req.body;
 
@@ -54,7 +54,7 @@ const getLastFetched = async (req, res) => {
   res.status(200).json({ lastfetched: pubkeyEntry.lastfetched });
 };
 
-//send command
+// send command
 const sendCommand = async (req, res) => {
   const { pubkey, signature, command } = req.body;
 
@@ -74,7 +74,7 @@ const sendCommand = async (req, res) => {
     return res.status(400).json({ error: "Invalid command" });
   }
 
-  // Validate timestamp
+  // validate timestamp
   if (!isTimestampValid(parsedCommand.timestamp)) {
     return res
       .status(400)
@@ -88,7 +88,7 @@ const sendCommand = async (req, res) => {
     return res.status(404).json({ error: "Public key not found" });
   }
 
-  if (pubkeyEntry.lastTimestamp > Date.now() - 5000) {
+  if (pubkeyEntry.lastTimestamp > Date.now() - 500) {
     return res.status(429).json({ error: "Rate limit exceeded" });
   }
 
@@ -104,7 +104,7 @@ const sendCommand = async (req, res) => {
   res.status(200).json({ success: true });
 };
 
-//fetch command
+// fetch command
 const fetchCommand = async (req, res) => {
   const { pubkey, signature, command } = req.body;
 
@@ -123,7 +123,7 @@ const fetchCommand = async (req, res) => {
     return res.status(400).json({ error: "Invalid command" });
   }
 
-  // Validate request timestamp
+  // validate request timestamp
   if (!isTimestampValid(parsedCommand.timestamp)) {
     return res
       .status(400)

@@ -11,7 +11,7 @@ const registerPubKey = async (req, res) => {
   }
 
   try {
-    // Verify CAPTCHA
+    // verify captcha
     const captchaResponse = await axios.post(
       `https://www.google.com/recaptcha/api/siteverify`,
       null,

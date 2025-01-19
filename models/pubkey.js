@@ -8,7 +8,7 @@ const PubKeySchema = new mongoose.Schema({
   lastfetched: { type: String, default: "" },
 });
 
-// Update lastTimestamp whenever the document is updated
+// update lastTimestamp before saving
 PubKeySchema.pre("save", function (next) {
   this.lastTimestamp = Date.now();
   next();
