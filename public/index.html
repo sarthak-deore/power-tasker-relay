@@ -48,10 +48,6 @@
         font-size: 1em;
       }
 
-      .g-recaptcha {
-        margin-bottom: 20px;
-      }
-
       button {
         background-color: #0984e3;
         color: #fff;
@@ -89,12 +85,22 @@
         display: none;
         margin: 20px 0;
       }
+
+      #turnstile-container {
+        margin: 20px 0;
+        display: flex;
+        justify-content: flex-start;
+      }
+
+      #turnstile-container iframe {
+        margin-left: 0;
+      }
     </style>
   </head>
   <body>
     <div class="container">
       <h1>Register Your Public Key</h1>
-      <div id="loading" class="loading">Loading reCAPTCHA...</div>
+      <div id="loading" class="loading">Loading Turnstile...</div>
       <form id="register-form" style="display: none">
         <input
           type="text"
@@ -103,45 +109,35 @@
           placeholder="Enter your public key"
           required
         />
-        <div id="recaptcha-container"></div>
+        <div id="turnstile-container"></div>
         <button type="submit">Register</button>
       </form>
       <div id="message" class="message"></div>
     </div>
 
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"></script>
     <script>
-      async function initializeRecaptcha() {
+      async function initializeTurnstile() {
         try {
           const response = await fetch("/api/pubkeys/recaptcha-site-key");
           if (!response.ok) {
-            throw new Error("Failed to fetch reCAPTCHA site key");
+            throw new Error("Failed to fetch Turnstile site key");
           }
 
           const { siteKey } = await response.json();
 
-          // Load reCAPTCHA script dynamically
-          const script = document.createElement("script");
-          script.src = `https://www.google.com/recaptcha/api.js?render=explicit`;
-          script.async = true;
-          script.defer = true;
-
-          script.onload = () => {
-            // Initialize reCAPTCHA once the script is loaded
-            grecaptcha.ready(() => {
-              grecaptcha.render("recaptcha-container", {
-                sitekey: siteKey,
-              });
-              // Show the form and hide loading message
-              document.getElementById("loading").style.display = "none";
-              document.getElementById("register-form").style.display = "block";
+          turnstile.ready(() => {
+            turnstile.render("#turnstile-container", {
+              sitekey: siteKey,
+              theme: "light",
             });
-          };
-
-          document.head.appendChild(script);
+            document.getElementById("loading").style.display = "none";
+            document.getElementById("register-form").style.display = "block";
+          });
         } catch (error) {
-          console.error("Error initializing reCAPTCHA:", error);
+          console.error("Error initializing Turnstile:", error);
           showMessage(
-            "Failed to load reCAPTCHA. Please refresh the page.",
+            "Failed to load Turnstile. Please refresh the page.",
             "error"
           );
         }
@@ -152,10 +148,10 @@
         .addEventListener("submit", async (event) => {
           event.preventDefault();
           const pubkey = document.getElementById("pubkey").value;
-          const captchaToken = grecaptcha.getResponse();
+          const token = turnstile.getResponse();
 
-          if (!captchaToken) {
-            showMessage("Please complete the CAPTCHA", "error");
+          if (!token) {
+            showMessage("Please complete the challenge", "error");
             return;
           }
 
@@ -165,7 +161,7 @@
               headers: {
                 "Content-Type": "application/json",
               },
-              body: JSON.stringify({ pubkey, captchaToken }),
+              body: JSON.stringify({ pubkey, captchaToken: token }),
             });
 
             const data = await response.json();
@@ -188,8 +184,7 @@
         messageElement.className = `message ${type}`;
       }
 
-      // Initialize when the page loads
-      initializeRecaptcha();
+      initializeTurnstile();
     </script>
   </body>
 </html>

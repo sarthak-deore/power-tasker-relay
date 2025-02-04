@@ -7,7 +7,7 @@ const router = express.Router();
 router.post("/register", registerPubKey);
 
 router.get("/recaptcha-site-key", (req, res) => {
-  res.json({ siteKey: process.env.RECAPTCHA_SITE_KEY });
+  res.json({ siteKey: process.env.TURNSTILE_SITE_KEY });
 });
 
 module.exports = router;

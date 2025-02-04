@@ -11,20 +11,22 @@ const registerPubKey = async (req, res) => {
   }
 
   try {
-    // verify captcha
-    const captchaResponse = await axios.post(
-      `https://www.google.com/recaptcha/api/siteverify`,
-      null,
+    // verify turnstile token
+    const turnstileResponse = await axios.post(
+      "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+      new URLSearchParams({
+        secret: process.env.TURNSTILE_SECRET_KEY,
+        response: captchaToken,
+      }),
       {
-        params: {
-          secret: process.env.RECAPTCHA_SECRET_KEY,
-          response: captchaToken,
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
         },
       }
     );
 
-    if (!captchaResponse.data.success) {
-      return res.status(400).json({ error: "Invalid CAPTCHA" });
+    if (!turnstileResponse.data.success) {
+      return res.status(400).json({ error: "Invalid challenge token" });
     }
 
     // add key or warn already registered
