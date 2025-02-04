@@ -10,6 +10,11 @@ const registerPubKey = async (req, res) => {
       .json({ error: "Public key and CAPTCHA token are required" });
   }
 
+  // validate public key
+  if (pubkey.length !== 130 || !pubkey.startsWith("04")) {
+    return res.status(400).json({ error: "Invalid public key format" });
+  }
+
   try {
     // verify turnstile token
     const turnstileResponse = await axios.post(
@@ -40,9 +45,7 @@ const registerPubKey = async (req, res) => {
         .json({ error: "Public key is already registered" });
     }
 
-    res
-      .status(200)
-      .json({ message: "Public key registered successfully", pubkey });
+    res.status(200).json({ message: "Public key registered successfully" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error" });
