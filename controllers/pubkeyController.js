@@ -31,7 +31,9 @@ const registerPubKey = async (req, res) => {
     );
 
     if (!turnstileResponse.data.success) {
-      return res.status(400).json({ error: "Invalid challenge token" });
+      return res
+        .status(400)
+        .json({ error: "Invalid challenge token, refresh the page" });
     }
 
     // add key or warn already registered
