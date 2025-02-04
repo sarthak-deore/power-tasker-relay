@@ -44,7 +44,7 @@ const registerPubKey = async (req, res) => {
     } else {
       return res
         .status(409)
-        .json({ error: "Public key is already registered" });
+        .json({ error: "Public key registered successfully" });
     }
 
     res.status(200).json({ message: "Public key registered successfully" });
