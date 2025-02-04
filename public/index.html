@@ -167,8 +167,6 @@
             const data = await response.json();
             if (response.ok) {
               showMessage("Registration successful!", "success");
-            } else if (response.status === 409) {
-              showMessage("This public key is already registered.", "error");
             } else {
               showMessage(`Error: ${data.error}`, "error");
             }

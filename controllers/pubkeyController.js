@@ -43,8 +43,8 @@ const registerPubKey = async (req, res) => {
       await pubkeyEntry.save();
     } else {
       return res
-        .status(409)
-        .json({ error: "Public key registered successfully" });
+        .status(200)
+        .json({ message: "Public key registered successfully" });
     }
 
     res.status(200).json({ message: "Public key registered successfully" });
